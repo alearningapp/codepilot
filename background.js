@@ -1,9 +1,9 @@
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.content) {
+    if (request.filePath&&request.fileContent) {
         // Prepare the data to send to the backend
         const dataToSend = {
-            content: request.content,
-            additionalContent: request.additionalContent // Include the additional content
+            content: request.filePath,
+            additionalContent: request.fileContent
         };
 
         // Send data to backend

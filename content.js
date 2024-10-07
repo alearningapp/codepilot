@@ -26,10 +26,10 @@ function createConfirmationPopup(file, codeElement, position) {
 
     // Add event listeners for buttons
     document.getElementById('confirmButton').addEventListener('click', () => {
-        // Send a message to the background script with the file and additional content
-        chrome.runtime.sendMessage({ content: file, additionalContent: codeElement.textContent }, (response) => {
+        // Send a message to the background script with the file path and content
+        chrome.runtime.sendMessage({ filePath: file, fileContent: codeElement.textContent }, (response) => {
             const responseMessage = document.getElementById('responseMessage');
-            responseMessage.textContent = response.data.message; // Updated line for both success and failure
+            responseMessage.textContent = response.data.message; // Show the response message
         });
     });
 
