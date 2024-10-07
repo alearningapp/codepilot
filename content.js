@@ -29,13 +29,8 @@ function createConfirmationPopup(file, codeElement, position) {
         // Send a message to the background script with the file and additional content
         chrome.runtime.sendMessage({ content: file, additionalContent: codeElement.textContent }, (response) => {
             const responseMessage = document.getElementById('responseMessage');
-            if (response.status === 'success') {
-                responseMessage.textContent = 'Operation successful!';
-            } else {
-                responseMessage.textContent = 'Operation failed: ' + response.message;
-            }
+            responseMessage.textContent = response.data.message; // Updated line for both success and failure
         });
-        // Removed dismissPopup call from here
     });
 
     document.getElementById('cancelButton').addEventListener('click', () => {
