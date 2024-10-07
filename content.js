@@ -1,5 +1,5 @@
 // Function to create a confirmation popup
-function createConfirmationPopup(content, codeElement, position) {
+function createConfirmationPopup(file, codeElement, position) {
     // Highlight the code element
     codeElement.style.border = '2px solid yellow'; // Highlight with a yellow border
 
@@ -15,19 +15,27 @@ function createConfirmationPopup(content, codeElement, position) {
     popup.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.1)';
 
     popup.innerHTML = `
-        <p>Do you want to send the following content?</p>
-        <pre>${content}</pre>
+        <p>Do you want to update the file?</p>
+        <pre>${file}</pre>
         <button id="confirmButton">Yes</button>
         <button id="cancelButton">No</button>
+        <div id="responseMessage" style="color: green; margin-top: 10px;"></div>
     `;
 
     document.body.appendChild(popup);
 
     // Add event listeners for buttons
     document.getElementById('confirmButton').addEventListener('click', () => {
-        // Send a message to the background script
-        chrome.runtime.sendMessage({ content: content });
-        dismissPopup(popup, codeElement); // Dismiss the popup
+        // Send a message to the background script with the file and additional content
+        chrome.runtime.sendMessage({ content: file, additionalContent: codeElement.textContent }, (response) => {
+            const responseMessage = document.getElementById('responseMessage');
+            if (response.status === 'success') {
+                responseMessage.textContent = 'Operation successful!';
+            } else {
+                responseMessage.textContent = 'Operation failed: ' + response.message;
+            }
+        });
+        // Removed dismissPopup call from here
     });
 
     document.getElementById('cancelButton').addEventListener('click', () => {
@@ -57,8 +65,8 @@ document.addEventListener('dblclick', function (event) {
     const clickedElement = event.target;
 
     // Use regex to extract the filename with the format filename.postfix
-    const contentMatch = clickedElement.innerText.match(/([a-zA-Z0-9-_]+(\.[a-zA-Z0-9]+)+)/);
-    const content = contentMatch ? contentMatch[0] : ''; // Get the matched filename
+    const fileMatch = clickedElement.innerText.match(/([a-zA-Z0-9-_]+(\.[a-zA-Z0-9]+)+)/);
+    const file = fileMatch ? fileMatch[0] : ''; // Get the matched filename
 
     // Find the closest h3 tag and its next sibling div containing a code tag
     const h3Element = clickedElement.closest('h3');
@@ -70,18 +78,12 @@ document.addEventListener('dblclick', function (event) {
         while (nextDiv) {
             if (nextDiv.tagName === 'DIV' && nextDiv.querySelector('code')) {
                 const codeElement = nextDiv.querySelector('code');
-                const additionalContent = codeElement.textContent;
 
                 // Get the position of the clicked element
                 const position = clickedElement.getBoundingClientRect();
 
                 // Create and show the confirmation popup
-                createConfirmationPopup(content, codeElement, position);
-
-                // When confirming, send both content and additionalContent
-                document.getElementById('confirmButton').addEventListener('click', () => {
-                    chrome.runtime.sendMessage({ content: content, additionalContent: additionalContent });
-                });
+                createConfirmationPopup(file, codeElement, position);
                 break; // Exit the loop once the correct div is found
             }
             nextDiv = nextDiv.nextElementSibling; // Move to the next sibling
