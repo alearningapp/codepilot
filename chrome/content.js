@@ -1,4 +1,3 @@
-
 // Function to create the confirmation popup
 function createConfirmationPopup(file, codeElement, position) {
     const isDarkTheme = detectTheme();
@@ -20,17 +19,25 @@ function createConfirmationPopup(file, codeElement, position) {
     popup.style.backgroundColor = isDarkTheme ? '#333' : 'white'; // Set background based on theme
     popup.style.color = isDarkTheme ? 'white' : 'black'; // Set text color based on theme
     popup.style.border = '1px solid #ccc';
-    popup.style.padding = '10px';
+    popup.style.padding = '5px'; // Changed to 5px
     popup.style.zIndex = '1000';
     popup.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.1)';
     popup.style.display = 'flex'; // Use flexbox for layout
     popup.style.flexDirection = 'column'; // Align items in a column
 
-    // Add CSS for selected state
+    // Add CSS for selected state and buttons
     const style = document.createElement('style');
     style.textContent = `
+        .button-container {
+            display: flex;
+            justify-content: flex-start; /* Align buttons to the left */
+            margin-top: 5px; /* Changed to 5px */
+        }
+        .button {
+            margin-left: 5px; /* Changed to 5px */
+        }
         .file-item {
-            padding: 5px;
+            padding: 5px; /* Remains 5px */
             cursor: pointer; /* Change cursor to pointer */
             transition: background-color 0.3s;
         }
@@ -47,10 +54,10 @@ function createConfirmationPopup(file, codeElement, position) {
         .files-container {
             display: grid;
             grid-template-columns: 1fr 1fr; /* Two columns for recent files and history */
-            gap: 10px; /* Space between grid items */
+            gap: 5px; /* Changed to 5px */
         }
         h4 {
-            margin: 0;
+            margin: 0; /* Remains 0 */
         }
     `;
     document.head.appendChild(style);
@@ -60,9 +67,8 @@ function createConfirmationPopup(file, codeElement, position) {
     inputSection.innerHTML = `
         <p>Do you want to update the file?</p>
         <input type="text" id="fileInput" value="${file}" style="width: 100%; box-sizing: border-box;" />
-        <div>
-            <button id="confirmButton">Yes</button>
-            <button id="cancelButton">No</button>
+        <div class="button-container">
+            <button id="confirmButton" class="button">Yes</button>
         </div>
     `;
     popup.appendChild(inputSection);
@@ -80,14 +86,14 @@ function createConfirmationPopup(file, codeElement, position) {
                 <li class="file-item" data-file="${f}">${f} <button type="button" class="removeFileButton" data-file="${f}">Remove</button></li>
             `).join('')}
         </ul>
-        <div id="responseMessage" style="color: green; margin-top: 10px;"></div>
+        <div id="responseMessage" style="color: green; margin-top: 5px;"></div> <!-- Changed to 5px -->
     `;
     filesContainer.appendChild(leftSection);
 
     // Create the right side for history
     const historySection = document.createElement('div');
     historySection.style.borderLeft = '1px solid #ccc';
-    historySection.style.paddingLeft = '10px';
+    historySection.style.paddingLeft = '5px'; // Changed to 5px
     historySection.innerHTML = `
         <h4>History</h4>
         <ul source="history" style="list-style-type: none; padding: 0; height: 150px; overflow-y: auto;">
@@ -122,7 +128,7 @@ function createConfirmationPopup(file, codeElement, position) {
         item.addEventListener('click', handleItemSelection);
     });
 
-    // Add event listeners for buttons
+    // Add event listeners for the confirm button
     document.getElementById('confirmButton').addEventListener('click', () => {
         const selectedFile = document.querySelector('.file-item.selected');
         if (!selectedFile) return; // Exit early if no file is selected
@@ -161,6 +167,7 @@ function createConfirmationPopup(file, codeElement, position) {
 
         // Send the message to the background script with the trimmed updatedFile
         sendMessageToBackground(updatedFile, fileContent, saveToHistory);
+        dismissPopup(popup, parentPre); // Dismiss the popup after confirmation
     });
 
     // Remove recent file when the remove button is clicked
@@ -176,10 +183,6 @@ function createConfirmationPopup(file, codeElement, position) {
             }
             event.stopPropagation(); // Prevent the click from bubbling up to the list item
         });
-    });
-
-    document.getElementById('cancelButton').addEventListener('click', () => {
-        dismissPopup(popup, parentPre); // Dismiss the popup
     });
 
     // Function to handle clicks outside the popup
@@ -260,7 +263,7 @@ function createDockedDiv() {
 
     const content = document.createElement('div');
     content.style.flex = '1';
-    content.style.padding = '10px';
+    content.style.padding = '5px'; // Changed to 5px
     content.style.background = '#fff';
     content.style.display = 'none'; // Set to hidden by default
     content.innerText = 'This is the content div.';
