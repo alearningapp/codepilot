@@ -3,7 +3,7 @@ function createConfirmationPopup(file, codeElement, position) {
     const parentPre = codeElement.closest('pre');
 
     if (parentPre) {
-        parentPre.style.border = '2px solid yellow'; // Highlight the parent <pre> tag with a yellow border
+        parentPre.style.border = '2px solid yellow'; // Highlight the parent <pre> tag
     }
 
     // Retrieve recent files from local storage
@@ -24,17 +24,17 @@ function createConfirmationPopup(file, codeElement, position) {
     popup.innerHTML = `
         <p>Do you want to update the file?</p>
         <input type="text" id="fileInput" value="${file}" />
-        <div id="recentFilesList">
+        <div>
+            <button id="confirmButton">Yes</button>
+            <button id="cancelButton">No</button>
+        </div>
+        <div id="recentFilesList" style="display: grid; gap: 5px;">
             ${recentFiles.map(f => `
                 <label>
                     <input type="radio" name="recentFile" value="${f}" /> ${f}
                     <button type="button" class="removeFileButton" data-file="${f}">Remove</button>
                 </label>
             `).join('')}
-        </div>
-        <div>
-        <button id="confirmButton">Yes</button>
-        <button id="cancelButton">No</button>
         </div>
         <div id="responseMessage" style="color: green; margin-top: 10px;"></div>
     `;
@@ -78,8 +78,7 @@ function createConfirmationPopup(file, codeElement, position) {
             if (index !== -1) {
                 recentFiles.splice(index, 1); // Remove the file from the array
                 localStorage.setItem('recentFiles', JSON.stringify(recentFiles));
-                setTimeout(()=>
-                event.target.closest('label').remove(),0); // Remove the label element from the DOM
+                setTimeout(() => event.target.closest('label').remove(), 0); // Remove the label element from the DOM
             }
         });
     });
@@ -120,8 +119,6 @@ function detectTheme() {
     return isDarkTheme;
 }
 
-
-
 // Function to dismiss the popup and remove highlight
 function dismissPopup(popup, parentPre) {
     document.body.removeChild(popup); // Remove the popup
@@ -147,7 +144,7 @@ function findCode(clickedElement) {
 function extractFilename(clickedElement, code) {
     let currentElement = clickedElement;
 
-    let excludeElement=code;
+    let excludeElement = code;
     while (currentElement) {
         // Case 1: currentElement does not contain excludeElement
         if (!currentElement.contains(excludeElement)) {
@@ -162,21 +159,19 @@ function extractFilename(clickedElement, code) {
                 if (child === excludeElement || excludeElement.contains(child)) {
                     continue; // Skip the excludeElement and its children
                 }
-                if(!child.innerText)continue;
+                if (!child.innerText) continue;
                 const fileMatch = child.innerText.match(/([a-zA-Z0-9-_]+(\.[a-zA-Z0-9]+)+)/);
                 if (fileMatch) {
                     return fileMatch[0]; // Return the first matched filename
                 }
             }
         }
-        
+
         // Move to the previous sibling or parent
         currentElement = currentElement.previousElementSibling || currentElement.parentElement;
     }
     return ''; // Return an empty string if no match is found
 }
-
-
 
 // Listen for double-click events
 document.addEventListener('dblclick', function (event) {
