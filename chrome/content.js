@@ -56,11 +56,8 @@ function createConfirmationPopup(file, codeElement, position) {
         }
         localStorage.setItem('recentFiles', JSON.stringify(recentFiles));
 
-        // Send a message to the background script with the updated file path and content
-        chrome.runtime.sendMessage({ filePath: updatedFile, fileContent: codeElement.textContent }, (response) => {
-            const responseMessage = document.getElementById('responseMessage');
-            responseMessage.textContent = response.data.message; // Show the response message
-        });
+        // Send a message to the background script
+        sendMessageToBackground(updatedFile, codeElement);
     });
 
     // Update the input value when a recent file radio button is clicked
@@ -99,18 +96,39 @@ function createConfirmationPopup(file, codeElement, position) {
     document.addEventListener('click', handleClickOutside);
 }
 
+// Function to send a message to the background script
+function sendMessageToBackground(updatedFile, codeElement, saveToHistory = true) {
+    const fileContent = codeElement.textContent;
+    const dt = Date.now(); // Get the current timestamp in milliseconds
+
+    // Save to local storage for history version if saveToHistory is true
+    if (saveToHistory) {
+        const history = JSON.parse(localStorage.getItem('fileHistory')) || [];
+        history.push({ filePath: updatedFile, fileContent, dt });
+
+        // Limit history to the last 10 entries
+        if (history.length > 10) {
+            history.shift(); // Remove the oldest entry
+        }
+        localStorage.setItem('fileHistory', JSON.stringify(history));
+    }
+
+    // Send a message to the background script
+    chrome.runtime.sendMessage({ filePath: updatedFile, fileContent }, (response) => {
+        const responseMessage = document.getElementById('responseMessage');
+        responseMessage.textContent = response.data.message; // Show the response message
+    });
+}
+
 // Function to detect the theme of the page
 function detectTheme() {
-    // Determine if the page uses a dark theme
     let isDarkTheme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
 
-    // If theme is not set, detect based on background color
     if (!window.matchMedia('(prefers-color-scheme: dark)').matches && !window.matchMedia('(prefers-color-scheme: light)').matches) {
         const bodyBgColor = window.getComputedStyle(document.body).backgroundColor;
         const rgb = bodyBgColor.match(/\d+/g); // Extract RGB values
 
         if (rgb) {
-            // Convert RGB to luminance
             const luminance = (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]) / 255;
             isDarkTheme = luminance < 0.5; // Consider it dark if luminance is below 0.5
         }
@@ -127,7 +145,7 @@ function dismissPopup(popup, parentPre) {
     }
 }
 
-// Function to find the next code element anywhere below clickedElement
+// Function to find the next code element below clickedElement
 function findCode(clickedElement) {
     const allCodeElements = document.querySelectorAll('code');
     let foundCodeElement = null;
@@ -141,19 +159,17 @@ function findCode(clickedElement) {
     return foundCodeElement;
 }
 
+// Function to extract filename
 function extractFilename(clickedElement, code) {
     let currentElement = clickedElement;
-
     let excludeElement = code;
     while (currentElement) {
-        // Case 1: currentElement does not contain excludeElement
         if (!currentElement.contains(excludeElement)) {
             const fileMatch = currentElement.innerText.match(/([a-zA-Z0-9-_]+(\.[a-zA-Z0-9]+)+)/);
             if (fileMatch) {
                 return fileMatch[0]; // Return the first matched filename
             }
         } else {
-            // Case 2: currentElement contains excludeElement, check children excluding excludeElement and its descendants
             const childNodes = [...currentElement.childNodes];
             for (const child of childNodes) {
                 if (child === excludeElement || excludeElement.contains(child)) {
@@ -166,8 +182,6 @@ function extractFilename(clickedElement, code) {
                 }
             }
         }
-
-        // Move to the previous sibling or parent
         currentElement = currentElement.previousElementSibling || currentElement.parentElement;
     }
     return ''; // Return an empty string if no match is found
@@ -195,8 +209,8 @@ document.addEventListener('dblclick', function (event) {
     }
 });
 
+// Function to create a docked div
 function createDockedDiv() {
-    // Create the docked div
     const dockedDiv = document.createElement('div');
     dockedDiv.style.position = 'fixed';
     dockedDiv.style.top = '50%';
@@ -209,14 +223,12 @@ function createDockedDiv() {
     dockedDiv.style.border = '1px solid #ccc';
     dockedDiv.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.1)';
 
-    // Create the resizer
     const resizer = document.createElement('div');
     resizer.style.width = '3px';
     resizer.style.cursor = 'ew-resize';
     resizer.style.background = '#ccc';
     dockedDiv.appendChild(resizer);
 
-    // Create the content div
     const content = document.createElement('div');
     content.style.flex = '1';
     content.style.padding = '10px';
@@ -225,7 +237,6 @@ function createDockedDiv() {
     content.innerText = 'This is the content div.';
     dockedDiv.appendChild(content);
 
-    // Create the toggle button
     const toggleWrapper = document.createElement('div');
     toggleWrapper.style.display = 'flex';
     toggleWrapper.style.alignItems = 'center';
