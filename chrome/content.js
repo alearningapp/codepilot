@@ -1,3 +1,5 @@
+
+// Function to create the confirmation popup
 function createConfirmationPopup(file, codeElement, position) {
     const isDarkTheme = detectTheme();
     const parentPre = codeElement.closest('pre');
@@ -124,8 +126,9 @@ function createConfirmationPopup(file, codeElement, position) {
     document.getElementById('confirmButton').addEventListener('click', () => {
         const selectedFile = document.querySelector('.file-item.selected');
         if (!selectedFile) return; // Exit early if no file is selected
-        
-        const updatedFile = document.querySelector('#fileInput').value.trim();
+
+        // Get the trimmed value from the file input
+        const updatedFile = document.getElementById('fileInput').value.trim();
         const fileList = selectedFile.closest('ul');
         const isHistoryItem = fileList.getAttribute('source') === 'history';
         let fileContent;
@@ -134,9 +137,9 @@ function createConfirmationPopup(file, codeElement, position) {
         if (isHistoryItem) {
             // Get the timestamp (dt) from the selected history item
             const dt = selectedFile.getAttribute('data-timestamp');
-            
+
             // Get fileContent from the history entry using dt
-            const historyEntry = JSON.parse(localStorage.getItem('fileHistory')).find(entry => entry.dt == dt);
+            const historyEntry = JSON.parse(localStorage.getItem('fileHistory')).find(entry => entry.dt === dt);
             fileContent = historyEntry ? historyEntry.fileContent : '';
             saveToHistory = false; // Set to false for history items
         } else {
@@ -156,7 +159,7 @@ function createConfirmationPopup(file, codeElement, position) {
             localStorage.setItem('recentFiles', JSON.stringify(recentFiles));
         }
 
-        // Send the message to the background script
+        // Send the message to the background script with the trimmed updatedFile
         sendMessageToBackground(updatedFile, fileContent, saveToHistory);
     });
 
@@ -164,6 +167,7 @@ function createConfirmationPopup(file, codeElement, position) {
     document.querySelectorAll('.removeFileButton').forEach(button => {
         button.addEventListener('click', (event) => {
             const fileToRemove = event.target.getAttribute('data-file');
+            const recentFiles = JSON.parse(localStorage.getItem('recentFiles')) || [];
             const index = recentFiles.indexOf(fileToRemove);
             if (index !== -1) {
                 recentFiles.splice(index, 1); // Remove the file from the array
@@ -190,44 +194,6 @@ function createConfirmationPopup(file, codeElement, position) {
     document.addEventListener('click', handleClickOutside);
 }
 
-// Function to send a message to the background script
-function sendMessageToBackground(updatedFile, fileContent, saveToHistory = true) {
-    // Save to local storage for history version if saveToHistory is true
-    if (saveToHistory) {
-        const history = JSON.parse(localStorage.getItem('fileHistory')) || [];
-        history.push({ filePath: updatedFile, fileContent, dt: Date.now() });
-
-        // Limit history to the last 10 entries
-        if (history.length > 10) {
-            history.shift(); // Remove the oldest entry
-        }
-        localStorage.setItem('fileHistory', JSON.stringify(history));
-    }
-
-    // Send a message to the background script
-    chrome.runtime.sendMessage({ filePath: updatedFile, fileContent }, (response) => {
-        const responseMessage = document.getElementById('responseMessage');
-        responseMessage.textContent = response.data.message; // Show the response message
-    });
-}
-
-// Function to detect the theme of the page
-function detectTheme() {
-    let isDarkTheme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-    if (!window.matchMedia('(prefers-color-scheme: dark)').matches && !window.matchMedia('(prefers-color-scheme: light)').matches) {
-        const bodyBgColor = window.getComputedStyle(document.body).backgroundColor;
-        const rgb = bodyBgColor.match(/\d+/g); // Extract RGB values
-
-        if (rgb) {
-            const luminance = (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]) / 255;
-            isDarkTheme = luminance < 0.5; // Consider it dark if luminance is below 0.5
-        }
-    }
-
-    return isDarkTheme;
-}
-
 // Function to dismiss the popup and remove highlight
 function dismissPopup(popup, parentPre) {
     document.body.removeChild(popup); // Remove the popup
@@ -248,34 +214,6 @@ function findCode(clickedElement) {
     });
 
     return foundCodeElement;
-}
-
-// Function to extract filename
-function extractFilename(clickedElement, code) {
-    let currentElement = clickedElement;
-    let excludeElement = code;
-    while (currentElement) {
-        if (!currentElement.contains(excludeElement)) {
-            const fileMatch = currentElement.innerText.match(/([a-zA-Z0-9-_]+(\.[a-zA-Z0-9]+)+)/);
-            if (fileMatch) {
-                return fileMatch[0]; // Return the first matched filename
-            }
-        } else {
-            const childNodes = [...currentElement.childNodes];
-            for (const child of childNodes) {
-                if (child === excludeElement || excludeElement.contains(child)) {
-                    continue; // Skip the excludeElement and its children
-                }
-                if (!child.innerText) continue;
-                const fileMatch = child.innerText.match(/([a-zA-Z0-9-_]+(\.[a-zA-Z0-9]+)+)/);
-                if (fileMatch) {
-                    return fileMatch[0]; // Return the first matched filename
-                }
-            }
-        }
-        currentElement = currentElement.previousElementSibling || currentElement.parentElement;
-    }
-    return ''; // Return an empty string if no match is found
 }
 
 // Listen for double-click events
@@ -429,25 +367,6 @@ function createDockedDiv() {
     handleMouseLeave();
 }
 
-function getScrollbarWidth() {
-    // Create a temporary div to measure scrollbar width
-    const outer = document.createElement('div');
-    outer.style.visibility = 'hidden';
-    outer.style.overflow = 'scroll'; // Force scrollbar to appear
-    outer.style.width = '100px';
-    outer.style.height = '100px';
-    document.body.appendChild(outer);
-
-    const inner = document.createElement('div');
-    inner.style.width = '100%';
-    inner.style.height = '100%';
-    outer.appendChild(inner);
-
-    const scrollbarWidth = outer.offsetWidth - inner.offsetWidth; // Calculate scrollbar width
-    outer.parentNode.removeChild(outer); // Clean up
-    return scrollbarWidth > 0 ? scrollbarWidth : 0; // Return width if present
-}
-
 function adjustDockedDivPosition(dockedDiv) {
     // Check if the scrollbar is visible
     if (document.body.scrollHeight > window.innerHeight) {
@@ -457,5 +376,5 @@ function adjustDockedDivPosition(dockedDiv) {
     }
 }
 
-// Call the function to create the docked div
+// Create the docked div on page load
 createDockedDiv();
