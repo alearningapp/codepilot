@@ -4,11 +4,11 @@
  function sendMessageToBackground(updatedFile, fileContent, saveToHistory = true) {
     if (saveToHistory) {
         const history = JSON.parse(localStorage.getItem('fileHistory')) || [];
-        history.push({ filePath: updatedFile, fileContent, dt: Date.now() });
+        history.unshift({ filePath: updatedFile, fileContent, dt: Date.now() });
 
         // Limit history to the last 10 entries
         if (history.length > 10) {
-            history.shift(); // Remove the oldest entry
+            history.pop(); // Remove the oldest entry
         }
         localStorage.setItem('fileHistory', JSON.stringify(history));
     }
