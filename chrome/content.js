@@ -32,8 +32,10 @@ function createConfirmationPopup(file, codeElement, position) {
                 </label>
             `).join('')}
         </div>
+        <div>
         <button id="confirmButton">Yes</button>
         <button id="cancelButton">No</button>
+        </div>
         <div id="responseMessage" style="color: green; margin-top: 10px;"></div>
     `;
 
@@ -197,3 +199,166 @@ document.addEventListener('dblclick', function (event) {
         }
     }
 });
+
+function createDockedDiv() {
+    // Create the docked div
+    const dockedDiv = document.createElement('div');
+    dockedDiv.style.position = 'fixed';
+    dockedDiv.style.top = '50%';
+    dockedDiv.style.right = `${getScrollbarWidth()}px`; // Set right position to scrollbar width if visible
+    dockedDiv.style.transform = 'translateY(-50%)';
+    dockedDiv.style.display = 'flex';
+    dockedDiv.style.flexDirection = 'row';
+    dockedDiv.style.alignItems = 'stretch';
+    dockedDiv.style.background = '#f0f0f0';
+    dockedDiv.style.border = '1px solid #ccc';
+    dockedDiv.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.1)';
+
+    // Create the resizer
+    const resizer = document.createElement('div');
+    resizer.style.width = '3px';
+    resizer.style.cursor = 'ew-resize';
+    resizer.style.background = '#ccc';
+    dockedDiv.appendChild(resizer);
+
+    // Create the content div
+    const content = document.createElement('div');
+    content.style.flex = '1';
+    content.style.padding = '10px';
+    content.style.background = '#fff';
+    content.style.display = 'none'; // Set to hidden by default
+    content.innerText = 'This is the content div.';
+    dockedDiv.appendChild(content);
+
+    // Create the toggle button
+    const toggleWrapper = document.createElement('div');
+    toggleWrapper.style.display = 'flex';
+    toggleWrapper.style.alignItems = 'center';
+    dockedDiv.appendChild(toggleWrapper);
+
+    const toggleButton = document.createElement('button');
+    toggleButton.style.cursor = 'pointer';
+    toggleButton.style.width = '1em';
+    toggleButton.style.height = '100px';
+    toggleButton.style.background = '#007bff';
+    toggleButton.style.color = 'white';
+    toggleButton.style.border = 'none';
+    toggleButton.style.display = 'flex';
+    toggleButton.style.flexDirection = 'column';
+    toggleButton.style.justifyContent = 'center';
+    toggleButton.style.alignItems = 'center';
+    toggleButton.style.transition = 'transform 0.3s ease';
+    toggleButton.style.outline = 'none';
+
+    // Create dots for the toggle button
+    for (let i = 0; i < 3; i++) {
+        const dot = document.createElement('div');
+        dot.style.width = '8px';
+        dot.style.height = '8px';
+        dot.style.background = 'white';
+        dot.style.borderRadius = '50%';
+        dot.style.margin = '2px 0';
+        toggleButton.appendChild(dot);
+    }
+    toggleWrapper.appendChild(toggleButton);
+    document.body.appendChild(dockedDiv);
+
+    // Adjust position of dockedDiv based on scrollbar visibility
+    adjustDockedDivPosition(dockedDiv);
+
+    // Resize functionality
+    let isResizing = false;
+
+    resizer.addEventListener('mousedown', (event) => {
+        isResizing = true;
+    });
+
+    window.addEventListener('mousemove', (event) => {
+        if (isResizing) {
+            const newWidth = window.innerWidth - event.clientX;
+            if (newWidth < 100) {
+                dockedDiv.style.width = 'auto';
+                content.style.display = 'none';
+            } else {
+                dockedDiv.style.width = `${newWidth}px`;
+                content.style.display = 'block';
+            }
+        }
+    });
+
+    window.addEventListener('mouseup', () => {
+        isResizing = false;
+    });
+
+    // Toggle button functionality
+    toggleButton.addEventListener('click', () => {
+        if (content.style.display === 'none') {
+            content.style.display = 'block';
+            dockedDiv.style.width = 'auto'; // Set to auto when shown
+        } else {
+            content.style.display = 'none';
+            dockedDiv.style.width = 'auto'; // Set to auto when hidden
+        }
+    });
+
+    // Hide content when clicking outside of dockedDiv
+    window.addEventListener('click', (event) => {
+        if (!dockedDiv.contains(event.target) && event.target !== toggleButton) {
+            content.style.display = 'none'; // Hide only the content
+        }
+    });
+
+    // Hover effect for toggleWrapper
+    dockedDiv.addEventListener('mouseenter', () => {
+        toggleWrapper.classList.add('hovered');
+    });
+
+    dockedDiv.addEventListener('mouseleave', () => {
+        toggleWrapper.classList.remove('hovered');
+        handleMouseLeave();
+    });
+
+    const handleMouseEnter = () => {
+        dockedDiv.style.opacity = '1';
+    };
+
+    // Function to handle mouse leave
+    const handleMouseLeave = () => {
+        dockedDiv.style.opacity = '0.2';
+    };
+
+    // Add event listeners for mouseenter and mouseleave
+    dockedDiv.addEventListener('mouseenter', handleMouseEnter);
+    handleMouseLeave();
+}
+
+function getScrollbarWidth() {
+    // Create a temporary div to measure scrollbar width
+    const outer = document.createElement('div');
+    outer.style.visibility = 'hidden';
+    outer.style.overflow = 'scroll'; // Force scrollbar to appear
+    outer.style.width = '100px';
+    outer.style.height = '100px';
+    document.body.appendChild(outer);
+
+    const inner = document.createElement('div');
+    inner.style.width = '100%';
+    inner.style.height = '100%';
+    outer.appendChild(inner);
+
+    const scrollbarWidth = outer.offsetWidth - inner.offsetWidth; // Calculate scrollbar width
+    outer.parentNode.removeChild(outer); // Clean up
+    return scrollbarWidth > 0 ? scrollbarWidth : 0; // Return width if present
+}
+
+function adjustDockedDivPosition(dockedDiv) {
+    // Check if the scrollbar is visible
+    if (document.body.scrollHeight > window.innerHeight) {
+        dockedDiv.style.right = `${getScrollbarWidth()}px`; // Set right position to scrollbar width
+    } else {
+        dockedDiv.style.right = '0'; // No scrollbar, align with the right edge
+    }
+}
+
+// Call the function to create the docked div
+createDockedDiv();

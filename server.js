@@ -41,7 +41,7 @@ app.post('/endpoint', async (req, res) => {
 
     // Ensure the directory exists
     try {
-        await fs.mkdir(DIR, { recursive: true });
+        await fs.mkdir(path.dirname(absolutePath), { recursive: true });
     } catch (err) {
         console.error('Error creating directory:', err);
         return res.status(500).json({ message: 'Error creating directory', error: err });
