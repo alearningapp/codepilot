@@ -136,7 +136,7 @@ function createConfirmationPopup(file, codeElement, position) {
             const dt = selectedFile.getAttribute('data-timestamp');
             
             // Get fileContent from the history entry using dt
-            const historyEntry = JSON.parse(localStorage.getItem('fileHistory')).find(entry => entry.dt === dt);
+            const historyEntry = JSON.parse(localStorage.getItem('fileHistory')).find(entry => entry.dt == dt);
             fileContent = historyEntry ? historyEntry.fileContent : '';
             saveToHistory = false; // Set to false for history items
         } else {
