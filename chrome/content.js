@@ -6,8 +6,9 @@ function createConfirmationPopup(file, codeElement, position) {
         parentPre.style.border = '2px solid yellow'; // Highlight the parent <pre> tag
     }
 
-    // Retrieve recent files from local storage
+    // Retrieve recent files and history from local storage
     const recentFiles = JSON.parse(localStorage.getItem('recentFiles')) || [];
+    const history = JSON.parse(localStorage.getItem('fileHistory')) || [];
 
     // Create the popup div
     const popup = document.createElement('div');
@@ -20,50 +21,124 @@ function createConfirmationPopup(file, codeElement, position) {
     popup.style.padding = '10px';
     popup.style.zIndex = '1000';
     popup.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.1)';
+    popup.style.display = 'flex'; // Use flexbox for layout
+    popup.style.flexDirection = 'column'; // Align items in a column
 
-    popup.innerHTML = `
+    // Add CSS for selected state
+    const style = document.createElement('style');
+    style.textContent = `
+        .file-item {
+            padding: 5px;
+            cursor: pointer; /* Change cursor to pointer */
+            transition: background-color 0.3s;
+        }
+        .file-item:hover {
+            background-color: #f0f0f0; /* Highlight on hover */
+        }
+        .file-item.selected {
+            background-color: #007bff; /* Background color when selected */
+            color: white; /* Text color when selected */
+        }
+        .checkbox-label {
+            display: block; /* Make label block to fill width */
+        }
+        .files-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* Two columns for recent files and history */
+            gap: 10px; /* Space between grid items */
+        }
+        h4 {
+            margin: 0;
+        }
+    `;
+    document.head.appendChild(style);
+
+    // Create input and buttons section
+    const inputSection = document.createElement('div');
+    inputSection.innerHTML = `
         <p>Do you want to update the file?</p>
-        <input type="text" id="fileInput" value="${file}" />
+        <input type="text" id="fileInput" value="${file}" style="width: 100%; box-sizing: border-box;" />
         <div>
             <button id="confirmButton">Yes</button>
             <button id="cancelButton">No</button>
         </div>
-        <div id="recentFilesList" style="display: grid; gap: 5px;">
+    `;
+    popup.appendChild(inputSection);
+
+    // Create a container for the recent files and history sections
+    const filesContainer = document.createElement('div');
+    filesContainer.classList.add('files-container');
+
+    // Create the left side for recent files
+    const leftSection = document.createElement('div');
+    leftSection.innerHTML = `
+        <h4>Recent Files</h4>
+        <ul id="recentFilesList" style="list-style-type: none; padding: 0; height: 150px; overflow-y: auto;">
             ${recentFiles.map(f => `
-                <label>
-                    <input type="radio" name="recentFile" value="${f}" /> ${f}
-                    <button type="button" class="removeFileButton" data-file="${f}">Remove</button>
-                </label>
+                <li class="file-item" data-file="${f}">${f} <button type="button" class="removeFileButton" data-file="${f}">Remove</button></li>
             `).join('')}
-        </div>
+        </ul>
         <div id="responseMessage" style="color: green; margin-top: 10px;"></div>
     `;
+    filesContainer.appendChild(leftSection);
 
+    // Create the right side for history
+    const historySection = document.createElement('div');
+    historySection.style.borderLeft = '1px solid #ccc';
+    historySection.style.paddingLeft = '10px';
+    historySection.innerHTML = `
+        <h4>History</h4>
+        <ul style="list-style-type: none; padding: 0; height: 150px; overflow-y: auto;">
+            ${history.map((entry) => `
+                <li class="file-item" data-file="${entry.filePath}">${entry.filePath} - ${new Date(entry.dt).toLocaleString()}</li>
+            `).join('')}
+        </ul>
+    `;
+    filesContainer.appendChild(historySection);
+
+    // Append the files container to the popup
+    popup.appendChild(filesContainer);
     document.body.appendChild(popup);
+
+    // Create a function to handle item selection
+    function handleItemSelection(event) {
+        const allItems = document.querySelectorAll('.file-item');
+        
+        // Deselect all items first
+        allItems.forEach(el => el.classList.remove('selected'));
+        
+        // Select the clicked item
+        this.classList.add('selected');
+        
+        // Update the input field with the selected file
+        document.getElementById('fileInput').value = this.getAttribute('data-file');
+    }
+
+    // Add event listeners for all file items
+    const allFileItems = document.querySelectorAll('.file-item');
+    allFileItems.forEach(item => {
+        item.addEventListener('click', handleItemSelection);
+    });
 
     // Add event listeners for buttons
     document.getElementById('confirmButton').addEventListener('click', () => {
-        const updatedFile = document.getElementById('fileInput').value;
+        const selectedFile = document.querySelector('.file-item.selected');
+        if (selectedFile) {
+            const updatedFile = selectedFile.getAttribute('data-file');
 
-        // Save the input value to recent files in local storage
-        const index = recentFiles.indexOf(updatedFile);
-        if (index !== -1) {
-            recentFiles.splice(index, 1); // Remove the existing item
-        }
-        recentFiles.unshift(updatedFile); // Add the new item to the beginning
-        if (recentFiles.length > 10) {
-            recentFiles.pop(); // Keep the list to a maximum of 10 files
-        }
-        localStorage.setItem('recentFiles', JSON.stringify(recentFiles));
+            // Save the selected file to recent files in local storage
+            const index = recentFiles.indexOf(updatedFile);
+            if (index !== -1) {
+                recentFiles.splice(index, 1); // Remove the existing item
+            }
+            recentFiles.unshift(updatedFile); // Add the new item to the beginning
+            if (recentFiles.length > 10) {
+                recentFiles.pop(); // Keep the list to a maximum of 10 files
+            }
+            localStorage.setItem('recentFiles', JSON.stringify(recentFiles));
 
-        // Send a message to the background script
-        sendMessageToBackground(updatedFile, codeElement);
-    });
-
-    // Update the input value when a recent file radio button is clicked
-    document.getElementById('recentFilesList').addEventListener('change', (event) => {
-        if (event.target.name === 'recentFile') {
-            document.getElementById('fileInput').value = event.target.value;
+            // Send a message to the background script
+            sendMessageToBackground(updatedFile, codeElement);
         }
     });
 
@@ -75,8 +150,9 @@ function createConfirmationPopup(file, codeElement, position) {
             if (index !== -1) {
                 recentFiles.splice(index, 1); // Remove the file from the array
                 localStorage.setItem('recentFiles', JSON.stringify(recentFiles));
-                setTimeout(() => event.target.closest('label').remove(), 0); // Remove the label element from the DOM
+                setTimeout(() => event.target.closest('li').remove(), 0); // Remove the list item from the DOM
             }
+            event.stopPropagation(); // Prevent the click from bubbling up to the list item
         });
     });
 
