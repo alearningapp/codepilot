@@ -73,7 +73,7 @@ function createConfirmationPopup(file, codeElement, position) {
     const leftSection = document.createElement('div');
     leftSection.innerHTML = `
         <h4>Recent Files</h4>
-        <ul id="recentFilesList" style="list-style-type: none; padding: 0; height: 150px; overflow-y: auto;">
+        <ul id="recentFilesList" source="recent" style="list-style-type: none; padding: 0; height: 150px; overflow-y: auto;">
             ${recentFiles.map(f => `
                 <li class="file-item" data-file="${f}">${f} <button type="button" class="removeFileButton" data-file="${f}">Remove</button></li>
             `).join('')}
@@ -88,9 +88,9 @@ function createConfirmationPopup(file, codeElement, position) {
     historySection.style.paddingLeft = '10px';
     historySection.innerHTML = `
         <h4>History</h4>
-        <ul style="list-style-type: none; padding: 0; height: 150px; overflow-y: auto;">
+        <ul source="history" style="list-style-type: none; padding: 0; height: 150px; overflow-y: auto;">
             ${history.map((entry) => `
-                <li class="file-item" data-file="${entry.filePath}">${entry.filePath} - ${new Date(entry.dt).toLocaleString()}</li>
+                <li class="file-item" data-file="${entry.filePath}" data-timestamp="${entry.dt}">${entry.filePath} - ${new Date(entry.dt).toLocaleString()}</li>
             `).join('')}
         </ul>
     `;
@@ -123,10 +123,28 @@ function createConfirmationPopup(file, codeElement, position) {
     // Add event listeners for buttons
     document.getElementById('confirmButton').addEventListener('click', () => {
         const selectedFile = document.querySelector('.file-item.selected');
-        if (selectedFile) {
-            const updatedFile = selectedFile.getAttribute('data-file');
+        if (!selectedFile) return; // Exit early if no file is selected
 
-            // Save the selected file to recent files in local storage
+        const updatedFile = selectedFile.getAttribute('data-file');
+        const fileList = selectedFile.closest('ul');
+        const isHistoryItem = fileList.getAttribute('source') === 'history';
+        let fileContent;
+        let saveToHistory = true; // Default to true
+
+        if (isHistoryItem) {
+            // Get the timestamp (dt) from the selected history item
+            const dt = selectedFile.getAttribute('data-timestamp');
+            
+            // Get fileContent from the history entry using dt
+            const historyEntry = JSON.parse(localStorage.getItem('fileHistory')).find(entry => entry.dt === dt);
+            fileContent = historyEntry ? historyEntry.fileContent : '';
+            saveToHistory = false; // Set to false for history items
+        } else {
+            // Get the content from the code element for recent files
+            fileContent = codeElement.textContent;
+
+            // Update recent files in local storage
+            const recentFiles = JSON.parse(localStorage.getItem('recentFiles')) || [];
             const index = recentFiles.indexOf(updatedFile);
             if (index !== -1) {
                 recentFiles.splice(index, 1); // Remove the existing item
@@ -136,10 +154,10 @@ function createConfirmationPopup(file, codeElement, position) {
                 recentFiles.pop(); // Keep the list to a maximum of 10 files
             }
             localStorage.setItem('recentFiles', JSON.stringify(recentFiles));
-
-            // Send a message to the background script
-            sendMessageToBackground(updatedFile, codeElement);
         }
+
+        // Send the message to the background script
+        sendMessageToBackground(updatedFile, fileContent, saveToHistory);
     });
 
     // Remove recent file when the remove button is clicked
@@ -173,14 +191,11 @@ function createConfirmationPopup(file, codeElement, position) {
 }
 
 // Function to send a message to the background script
-function sendMessageToBackground(updatedFile, codeElement, saveToHistory = true) {
-    const fileContent = codeElement.textContent;
-    const dt = Date.now(); // Get the current timestamp in milliseconds
-
+function sendMessageToBackground(updatedFile, fileContent, saveToHistory = true) {
     // Save to local storage for history version if saveToHistory is true
     if (saveToHistory) {
         const history = JSON.parse(localStorage.getItem('fileHistory')) || [];
-        history.push({ filePath: updatedFile, fileContent, dt });
+        history.push({ filePath: updatedFile, fileContent, dt: Date.now() });
 
         // Limit history to the last 10 entries
         if (history.length > 10) {
