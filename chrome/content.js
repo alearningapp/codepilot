@@ -167,7 +167,7 @@ function createConfirmationPopup(file, codeElement, position) {
 
         // Send the message to the background script with the trimmed updatedFile
         sendMessageToBackground(updatedFile, fileContent, saveToHistory);
-        dismissPopup(popup, parentPre); // Dismiss the popup after confirmation
+        //dismissPopup(popup, parentPre); // Dismiss the popup after confirmation
     });
 
     // Remove recent file when the remove button is clicked
@@ -381,3 +381,9 @@ function adjustDockedDivPosition(dockedDiv) {
 
 // Create the docked div on page load
 createDockedDiv();
+
+document.querySelectorAll('code').forEach(function(codeElement) {
+	codeElement.addEventListener('dblclick', function() {
+		this.scrollIntoView({ behavior: 'smooth' });
+	});
+});

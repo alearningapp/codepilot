@@ -16,7 +16,7 @@
     // Send a message to the background script
     chrome.runtime.sendMessage({ filePath: updatedFile, fileContent }, (response) => {
         const responseMessage = document.getElementById('responseMessage');
-        responseMessage.textContent = response.data.message; // Show the response message
+        responseMessage.textContent = response.data.filePath +":"+ response.data.message; // Show the response message
     });
 }
 
