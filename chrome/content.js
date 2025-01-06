@@ -382,8 +382,45 @@ function adjustDockedDivPosition(dockedDiv) {
 // Create the docked div on page load
 createDockedDiv();
 
-document.querySelectorAll('code').forEach(function(codeElement) {
-	codeElement.addEventListener('dblclick', function() {
-		this.scrollIntoView({ behavior: 'smooth' });
-	});
-});
+  document.addEventListener('dblclick', function(event) {
+        const codeElement = event.target.closest('code'); // Find the closest code element
+
+        if (codeElement) {
+            const scrollableContainer = findScrollableParent(codeElement);
+            if (scrollableContainer) {
+                handleScroll(scrollableContainer, codeElement); // Call the scroll function
+            }
+        }
+    });
+
+    // Function to find the nearest scrollable parent
+    function findScrollableParent(element) {
+        let parent = element.parentElement;
+
+        while (parent) {
+            const overflowY = window.getComputedStyle(parent).overflowY;
+            const isScrollable = (overflowY === 'auto' || overflowY === 'scroll') && 
+                                (parent.clientHeight < parent.scrollHeight);
+            if (isScrollable) {
+                return parent; // Return the first scrollable parent found
+            }
+            parent = parent.parentElement; // Move up the DOM tree
+        }
+        return null; // No scrollable parent found
+    }
+
+    // Function to handle the scroll logic
+    function handleScroll(scrollableContainer, codeElement) {
+        const elementRect = codeElement.getBoundingClientRect();
+        const containerRect = scrollableContainer.getBoundingClientRect();
+        
+        // Calculate the top position of the code element relative to the scrollable container
+        const scrollY = elementRect.top - containerRect.top + scrollableContainer.scrollTop - 60; // Add 50px offset
+
+        // Scroll to the calculated position
+        scrollableContainer.scrollTo({
+            top: scrollY,
+            behavior: 'smooth'
+        });
+    }
+	console.log('codepilot');
