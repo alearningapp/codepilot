@@ -131,12 +131,12 @@ function createConfirmationPopup(file, codeElement, position) {
     // Add event listeners for the confirm button
     document.getElementById('confirmButton').addEventListener('click', () => {
         const selectedFile = document.querySelector('.file-item.selected');
-        if (!selectedFile) return; // Exit early if no file is selected
+        if (!selectedFile &&  document.getElementById('fileInput').value.trim().length==0) return; // Exit early if no file is selected
 
         // Get the trimmed value from the file input
         const updatedFile = document.getElementById('fileInput').value.trim();
-        const fileList = selectedFile.closest('ul');
-        const isHistoryItem = fileList.getAttribute('source') === 'history';
+        const fileList = selectedFile&&selectedFile.closest('ul');
+        const isHistoryItem = fileList&&fileList.getAttribute('source') === 'history';
         let fileContent;
         let saveToHistory = true; // Default to true
 
