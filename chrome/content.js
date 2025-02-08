@@ -40,6 +40,8 @@ function createConfirmationPopup(file, codeElement, position) {
             padding: 5px; /* Remains 5px */
             cursor: pointer; /* Change cursor to pointer */
             transition: background-color 0.3s;
+			display:flex;
+			justify-content: space-between;
         }
         .file-item:hover {
             background-color: #f0f0f0; /* Highlight on hover */
@@ -53,7 +55,7 @@ function createConfirmationPopup(file, codeElement, position) {
         }
         .files-container {
             display: grid;
-            grid-template-columns: 1fr 1fr; /* Two columns for recent files and history */
+            grid-template-columns: 1fr; /* Two columns for recent files and history */
             gap: 5px; /* Changed to 5px */
         }
         h4 {
@@ -83,7 +85,7 @@ function createConfirmationPopup(file, codeElement, position) {
         <h4>Recent Files</h4>
         <ul id="recentFilesList" source="recent" style="list-style-type: none; padding: 0; height: 150px; overflow-y: auto;">
             ${recentFiles.map(f => `
-                <li class="file-item" data-file="${f}">${f} <button type="button" class="removeFileButton" data-file="${f}">Remove</button></li>
+                <li class="file-item" data-file="${f}"><span>${f}</span> <button type="button" class="removeFileButton" data-file="${f}">Remove</button></li>
             `).join('')}
         </ul>
         <div id="responseMessage" style="color: green; margin-top: 5px;"></div> <!-- Changed to 5px -->
@@ -102,7 +104,7 @@ function createConfirmationPopup(file, codeElement, position) {
             `).join('')}
         </ul>
     `;
-    filesContainer.appendChild(historySection);
+   // filesContainer.appendChild(historySection);
 
     // Append the files container to the popup
     popup.appendChild(filesContainer);
