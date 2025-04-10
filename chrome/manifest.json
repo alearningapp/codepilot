@@ -14,7 +14,7 @@
   },
   "content_scripts": [
     {
-     "matches": ["*://poe.com/*", "*://copilot.microsoft.com/*"],
+     "matches": ["*://poe.com/*", "*://copilot.microsoft.com/*","*://grok.com/*"],
       "js": ["Util.js","content.js"]
     }
   ]

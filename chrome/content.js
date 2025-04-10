@@ -224,9 +224,9 @@ function findCode(clickedElement) {
 // Listen for double-click events
 document.addEventListener('dblclick', function (event) {
     const clickedElement = event.target;
-
+    console.log(event)
     // Check if the clicked element contains "Copy"
-    if (clickedElement.innerText.includes("Copy")) {
+    if (clickedElement.innerText.includes("Copy")||clickedElement.innerText.includes("javascript")) {
         // Find the code element
         const codeElement = findCode(clickedElement);
 
