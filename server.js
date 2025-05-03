@@ -31,7 +31,7 @@ app.post('/endpoint', async (req, res) => {
     }
 
     // Construct the full file path
-    const filePath = path.join(DIR, content);
+    const filePath = content[0]=='/'?content:path.join(DIR, content);
     const absolutePath = path.resolve(filePath); // Get the absolute path
 	console.log(filePath,content);
     // Log the received content and the directory parameter
