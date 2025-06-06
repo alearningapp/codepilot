@@ -1,7 +1,7 @@
 // Function to create the confirmation popup
 function createConfirmationPopup(file, codeElement, position) {
     const isDarkTheme = detectTheme();
-    const parentPre = codeElement.closest('pre');
+    const parentPre = codeElement.closest('pre')||codeElement.parentElement;
 
     if (parentPre) {
         parentPre.style.border = '2px solid yellow'; // Highlight the parent <pre> tag
@@ -152,7 +152,7 @@ function createConfirmationPopup(file, codeElement, position) {
             saveToHistory = false; // Set to false for history items
         } else {
             // Get the content from the code element for recent files
-            fileContent = codeElement.textContent;
+            fileContent = codeElement.tag=='CODE'?codeElement.textContent:codeElement.innerText;
 
             // Update recent files in local storage
             const recentFiles = JSON.parse(localStorage.getItem('recentFiles')) || [];
@@ -226,7 +226,7 @@ document.addEventListener('dblclick', function (event) {
     const clickedElement = event.target;
     console.log(event)
     // Check if the clicked element contains "Copy"
-    if (clickedElement.innerText.includes("Copy")||clickedElement.innerText.includes("javascript")) {
+    if (clickedElement.innerText.includes("Copy")||clickedElement.innerText.includes("javascript")||clickedElement.innerText.includes("Code")) {
         // Find the code element
         const codeElement = findCode(clickedElement);
 
@@ -239,6 +239,17 @@ document.addEventListener('dblclick', function (event) {
 
             // Create and show the confirmation popup
             createConfirmationPopup(file, codeElement, position);
+        }else{
+           let canvaEditor = document.querySelector('.monaco-editor');
+           if(canvaEditor){
+                        // Get the position of the clicked element
+                        const position = clickedElement.getBoundingClientRect();
+                        const file = "";
+
+                        // Create and show the confirmation popup
+                        createConfirmationPopup(file, canvaEditor, position);
+           }
+
         }
     }
 });
